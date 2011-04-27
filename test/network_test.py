@@ -32,3 +32,17 @@ class NetworkManagerTest(unittest.TestCase):
 		    "Expected gateway address to be a string.")
 	    self.assertTrue(re.match(self.ipPattern, entry[2]),
 		    "Invalid gateway address.")
+
+    def test_getNameservers (self):
+	nameservers = self.manager.getNameservers()
+	self.assertTrue(isinstance(nameservers, list),
+		"Expected a list of nameservers.")
+
+	for entry in nameservers:
+	    self.assertTrue(isinstance(entry, str),
+		    "Expected nameserver to be a string.")
+	    self.assertTrue(re.match(self.ipPattern, entry),
+		    "Invalid IP address.")
+
+class NetworkMatcherTest(unittest.TestCase):
+    pass
