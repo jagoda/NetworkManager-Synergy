@@ -55,6 +55,9 @@ class NetworkManager:
 	return map(lambda a: (intToIp(a[0]), int(a[1]), intToIp(a[2])),
 		addresses)
 
+    def registerStateChangeHandler (self, handler):
+	pass
+
     def _getActiveDevices (self):
 	manager = self._getObject(self._manager)
 	connections = self._getProperty(manager, self._managerInterface,
