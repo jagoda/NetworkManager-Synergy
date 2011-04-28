@@ -1,19 +1,36 @@
+import ConfigParser
 import dbus
+import os
+import socket
 
 
-def intToIP (integer):
+def ipToInt (ip):
+    parts = ip.split('.')
+
+    integer = 0
+    for part in parts:
+	integer = integer << 8
+	integer += int(part)
+
+    return socket.htonl(integer)
+
+def intToIp (integer):
+    integer = socket.ntohl(integer)
     parts = []
 
-    # FIXME: not sure if DBus will handle endianness...
-    for i in range(0, 4):
+    for i in range(0,4):
 	parts.append(str(integer & 0xFF))
 	integer = integer >> 8
-
+    parts.reverse()
     return '.'.join(parts)
 
 def listReducer (a, b):
     return a + b
 
+def networkAddress (ip, prefix):
+    integer = ipToInt(ip)
+    mask = socket.htonl(0xFFFFFFFF << (32 - prefix))
+    return intToIp(integer & mask)
 
 class NetworkManager:
     _service = 'org.freedesktop.NetworkManager'
@@ -31,18 +48,11 @@ class NetworkManager:
     _deviceConfig = 'Ip4Config'
     _managerConnections = 'ActiveConnections'
 
-    # FIXME: need to remove duplicates
-    def getNameservers (self):
-	devices = self._getActiveDevices()
-	nameservers = map(self._getDeviceNameservers, devices)
-	nameservers = reduce(listReducer, nameservers)
-	return map(intToIP, nameservers)
-
     def getNetworks (self):
 	devices = self._getActiveDevices()
 	addresses = map(self._getDeviceAddresses, devices)
 	addresses = reduce(listReducer, addresses)
-	return map(lambda a: (intToIP(a[0]), int(a[1]), intToIP(a[2])),
+	return map(lambda a: (intToIp(a[0]), int(a[1]), intToIp(a[2])),
 		addresses)
 
     def _getActiveDevices (self):
@@ -81,5 +91,35 @@ class NetworkManager:
 	return proxy.Get(interface, prop)
 
 class NetworkMatcher:
-    # TODO: need to implement this
-    pass
+    address = 'address'
+    prefix = 'prefix'
+    gateway = 'gateway'
+
+    _config = None
+    
+    # TODO: add support for default config file
+    def __init__ (self, config = os.environ['HOME'] + '/.nm_synergy.conf'):
+	self._config = ConfigParser.ConfigParser()
+	self._config.read(config)
+
+    def match (self):
+	hosts = self._config.sections()
+	networks = NetworkManager().getNetworks()
+
+	for host in hosts:
+	    address = self._config.get(host, self.address)
+	    prefix = self._config.getint(host, self.prefix)
+	    gateway = self._config.get(host, self.gateway)
+
+	    for network in networks:
+		if self._isMatch(network,
+			(address, prefix, gateway)):
+		    return host
+	return None
+
+    def _isMatch (self, one, two):
+	gateway1 = one[2]
+	gateway2 = two[2]
+	networkAddress1 = networkAddress(one[0], one[1])
+	networkAddress2 = networkAddress(two[0], two[1])
+	return networkAddress1 == networkAddress2 and gateway1 == gateway2
