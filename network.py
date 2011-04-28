@@ -48,6 +48,10 @@ class NetworkManager:
     _deviceConfig = 'Ip4Config'
     _managerConnections = 'ActiveConnections'
 
+    _managerStateChanged = 'StateChanged'
+
+    _NM_STATE_CONNECTED = 3
+
     def getNetworks (self):
 	devices = self._getActiveDevices()
 	addresses = map(self._getDeviceAddresses, devices)
@@ -55,8 +59,15 @@ class NetworkManager:
 	return map(lambda a: (intToIp(a[0]), int(a[1]), intToIp(a[2])),
 		addresses)
 
-    def registerStateChangeHandler (self, handler):
-	pass
+    def registerConnectHandler (self, handler):
+	dbus.SystemBus().add_signal_receiver(
+		lambda state: self._managerStateChange(handler, state),
+		self._managerStateChanged, self._managerInterface)
+
+    def _managerStateChange (self, handler, state):
+	print 'handling state change...'
+	if state == self._NM_STATE_CONNECTED:
+	    handler()
 
     def _getActiveDevices (self):
 	manager = self._getObject(self._manager)

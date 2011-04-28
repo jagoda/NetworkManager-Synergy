@@ -19,10 +19,15 @@ def connect ():
 def disconnect ():
     subprocess.call(['killall', 'synergyc'])
 
+def reconnect ():
+    disconnect()
+    connect()
+
 
 DBusGMainLoop(set_as_default = True)
-disconnect()
-connect()
+reconnect()
+
+network.NetworkManager().registerConnectHandler(reconnect)
 
 if os.fork() == 0:
     gobject.MainLoop().run()
