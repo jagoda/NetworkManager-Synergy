@@ -1,11 +1,8 @@
 #!/usr/bin/env python
 
 import network
-import os
 import subprocess
-
-from dbus.mainloop.glib import DBusGMainLoop
-import gobject
+import utils
 
 
 def connect ():
@@ -24,9 +21,6 @@ def reconnect ():
     connect()
 
 
-DBusGMainLoop(set_as_default = True)
-if os.fork() == 0:
-    network.NetworkManager().registerConnectHandler(reconnect)
-    gobject.MainLoop().run()
-else:
-    reconnect()
+utils.init()
+network.NetworkManager().registerConnectHandler(reconnect)
+reconnect()
