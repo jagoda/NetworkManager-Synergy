@@ -46,6 +46,7 @@ class NetworkManager:
     _connectionDevices = 'Devices'
     _configNameservers = 'Nameservers'
     _deviceConfig = 'Ip4Config'
+    _deviceName = 'Interface'
     _managerConnections = 'ActiveConnections'
 
     _managerStateChanged = 'StateChanged'
@@ -54,10 +55,13 @@ class NetworkManager:
 
     def getNetworks (self):
 	devices = self._getActiveDevices()
+        names = map(self._getDeviceName, devices)
 	addresses = map(self._getDeviceAddresses, devices)
-	addresses = reduce(listReducer, addresses)
-	return map(lambda a: (intToIp(a[0]), int(a[1]), intToIp(a[2])),
-		addresses)
+        tuples = map(lambda n, a: (n, a), names, addresses)
+        tuples = map(lambda t: [(str(t[0]), intToIp(a[0]), int(a[1]),
+            intToIp(a[2])) for a in t[1]], tuples)
+        tuples = reduce(listReducer, tuples)
+        return tuples
 
     def registerConnectHandler (self, handler):
 	dbus.SystemBus().add_signal_receiver(
@@ -75,6 +79,7 @@ class NetworkManager:
 		self._managerConnections)
 	connections = map(self._getObject, connections)
 	devices = map(self._getConnectionDevices, connections)
+        # FIXME: need to check for duplicates ???
 	return reduce(listReducer, devices)
 
     def _getConnectionDevices (self, connection):
@@ -92,6 +97,10 @@ class NetworkManager:
 		self._deviceConfig)
 	return self._getObject(config)
 
+    def _getDeviceName (self, device):
+        return self._getProperty(device, self._deviceInterface,
+                self._deviceName)
+
     def _getDeviceNameservers (self, device):
 	config = self._getDeviceConfig(device)
 	return self._getProperty(config, self._configInterface,
@@ -105,6 +114,7 @@ class NetworkManager:
 	return proxy.Get(interface, prop)
 
 class NetworkMatcher:
+    interface = 'interface'
     address = 'address'
     prefix = 'prefix'
     gateway = 'gateway'
@@ -121,19 +131,23 @@ class NetworkMatcher:
 	networks = NetworkManager().getNetworks()
 
 	for host in hosts:
+            interface = self._config.get(host, self.interface)
 	    address = self._config.get(host, self.address)
 	    prefix = self._config.getint(host, self.prefix)
 	    gateway = self._config.get(host, self.gateway)
 
 	    for network in networks:
 		if self._isMatch(network,
-			(address, prefix, gateway)):
+			(interface, address, prefix, gateway)):
 		    return host
 	return None
 
     def _isMatch (self, one, two):
-	gateway1 = one[2]
-	gateway2 = two[2]
-	networkAddress1 = networkAddress(one[0], one[1])
-	networkAddress2 = networkAddress(two[0], two[1])
-	return networkAddress1 == networkAddress2 and gateway1 == gateway2
+        interface1 = one[0]
+        interface2 = two[0]
+	gateway1 = one[3]
+	gateway2 = two[3]
+	networkAddress1 = networkAddress(one[1], one[2])
+	networkAddress2 = networkAddress(two[1], two[2])
+	return interface1 == interface2 and \
+                networkAddress1 == networkAddress2 and gateway1 == gateway2
