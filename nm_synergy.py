@@ -25,9 +25,8 @@ def reconnect ():
 
 
 DBusGMainLoop(set_as_default = True)
-reconnect()
-
-network.NetworkManager().registerConnectHandler(reconnect)
-
 if os.fork() == 0:
+    network.NetworkManager().registerConnectHandler(reconnect)
     gobject.MainLoop().run()
+else:
+    reconnect()

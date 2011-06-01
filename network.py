@@ -49,9 +49,9 @@ class NetworkManager:
     _deviceName = 'Interface'
     _managerConnections = 'ActiveConnections'
 
-    _managerStateChanged = 'StateChanged'
+    _deviceStateChanged = 'StateChanged'
 
-    _NM_STATE_CONNECTED = 3
+    _NM_DEVICE_STATE_ACTIVATED = 8
 
     def getNetworks (self):
 	devices = self._getActiveDevices()
@@ -63,15 +63,17 @@ class NetworkManager:
         tuples = reduce(listReducer, tuples)
         return tuples
 
-    def registerConnectHandler (self, handler):
-	dbus.SystemBus().add_signal_receiver(
-		lambda state: self._managerStateChange(handler, state),
-		self._managerStateChanged, self._managerInterface)
+    def foo (self, *args):
+        print 'here!'
 
-    def _managerStateChange (self, handler, state):
-	print 'handling state change...'
-	if state == self._NM_STATE_CONNECTED:
-	    handler()
+    def registerConnectHandler (self, handler):
+        dbus.SystemBus().add_signal_receiver(
+        	lambda *state: self._managerStateChange(handler, *state),
+        	self._deviceStateChanged, self._deviceInterface)
+
+    def _managerStateChange (self, handler, *state):
+        if state[0] == self._NM_DEVICE_STATE_ACTIVATED:
+            handler()
 
     def _getActiveDevices (self):
 	manager = self._getObject(self._manager)
@@ -89,13 +91,17 @@ class NetworkManager:
 
     def _getDeviceAddresses (self, device):
 	config = self._getDeviceConfig(device)
-	return self._getProperty(config, self._configInterface,
-		self._configAddresses)
+        if config == None: addresses = []
+        else: addresses = self._getProperty(config, self._configInterface,
+                self._configAddresses)
+	return addresses
 
     def _getDeviceConfig (self, device):
 	config = self._getProperty(device, self._deviceInterface,
 		self._deviceConfig)
-	return self._getObject(config)
+        if config == '/': config = None
+        else: config = self._getObject(config)
+	return config
 
     def _getDeviceName (self, device):
         return self._getProperty(device, self._deviceInterface,
