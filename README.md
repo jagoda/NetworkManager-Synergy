@@ -31,10 +31,8 @@ setup), it's value is largely increased by having the daemon be launched
 automatically by the client system. Exactly how this configuration is
 performed depends on the specific system being configured.
 
-Linux
------
-
-### GDM
+GDM
+---
 
 The GDM login manager has configuration hooks that allow spawning processes
 pre-login. All of these processes are run as the `gdm` user. When GDM is
@@ -43,7 +41,8 @@ starting from the login screen.
 
 *FIXME:* document (or link to) GDM configuration steps.
 
-### User Sessions
+User Sessions
+-------------
 
 `nm_synergy` can also be configured to run within a specified user session. This
 has the same effect as launching the daemon from GDM with the exception that
