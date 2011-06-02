@@ -6,6 +6,9 @@ connect to Synergy servers based on the current network environment. The client
 spawns an event loop process to listen for state changes in order to
 adapt to changing network conditions.
 
+Currently `nm_synergy` requires that Synergy (server and client) be configured
+completely separately.
+
 Client Configuration
 ====================
 
