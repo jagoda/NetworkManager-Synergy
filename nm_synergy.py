@@ -24,3 +24,4 @@ def reconnect ():
 utils.init()
 network.NetworkManager().registerConnectHandler(reconnect)
 reconnect()
+utils.fork()

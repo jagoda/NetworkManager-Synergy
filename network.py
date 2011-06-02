@@ -72,6 +72,7 @@ class NetworkManager:
         	self._deviceStateChanged, self._deviceInterface)
 
     def _managerStateChange (self, handler, *state):
+        print 'handling...'
         if state[0] == self._NM_DEVICE_STATE_ACTIVATED:
             handler()
 
