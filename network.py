@@ -51,6 +51,7 @@ class NetworkManager:
 
     _deviceStateChanged = 'StateChanged'
 
+    _NM_DEVICE_STATE_UNAVAILABLE = 2
     _NM_DEVICE_STATE_ACTIVATED = 8
 
     def getNetworks (self):
@@ -63,17 +64,14 @@ class NetworkManager:
         tuples = reduce(listReducer, tuples)
         return tuples
 
-    def foo (self, *args):
-        print 'here!'
-
     def registerConnectHandler (self, handler):
         dbus.SystemBus().add_signal_receiver(
         	lambda *state: self._managerStateChange(handler, *state),
         	self._deviceStateChanged, self._deviceInterface)
 
     def _managerStateChange (self, handler, *state):
-        print 'handling...'
-        if state[0] == self._NM_DEVICE_STATE_ACTIVATED:
+        if state[0] == self._NM_DEVICE_STATE_ACTIVATED or \
+                state[0] == self._NM_DEVICE_STATE_UNAVAILABLE:
             handler()
 
     def _getActiveDevices (self):
