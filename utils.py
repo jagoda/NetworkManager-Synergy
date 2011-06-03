@@ -18,7 +18,7 @@ def createPIDFile (path = _PIDFile):
 def deletePIDFile (path = _PIDFile):
     os.remove(path)
 
-def exitHandler ():
+def exitHandler (*args):
     deletePIDFile()
     sys.exit()
 
@@ -32,4 +32,5 @@ def init (path = _PIDFile):
 def fork ():
     if os.fork() == 0:
         signal.signal(signal.SIGTERM, exitHandler)
+        signal.signal(signal.SIGINT, exitHandler)
         gobject.MainLoop().run()

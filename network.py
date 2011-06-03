@@ -29,7 +29,7 @@ def listReducer (a, b):
 
 def networkAddress (ip, prefix):
     integer = ipToInt(ip)
-    mask = socket.htonl(0xFFFFFFFF << (32 - prefix))
+    mask = socket.htonl((0xFFFFFFFF << (32 - prefix)) & 0xFFFFFFFF)
     return intToIp(integer & mask)
 
 class NetworkManager:
